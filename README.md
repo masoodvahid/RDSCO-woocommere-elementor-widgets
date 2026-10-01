@@ -25,14 +25,14 @@ Requires WordPress 6.5+, WooCommerce, Elementor 3.20+, PHP 8.1+.
 - Number of results (1–20), group results by category
 - Search in description on/off (name and SKU are always searched)
 - Show image, price, SKU, "View all results" link, custom no-results text
-- Style tab: search box, results list, popup and category buttons
+- Style tab: search box, results list, popup and category tree
 
 ## Performance
 
 - Search starts after 3 characters and always waits 500 ms after the last keystroke
 - Stale requests are aborted; recent results are cached in the browser
 - One ranked SQL query; SKUs (including variation SKUs) come from WooCommerce's indexed `wc_product_meta_lookup` table
-- Results are cached in the persistent object cache when available (auto-invalidated on product or category changes); responses are anonymous and cacheable for 5 minutes
+- Results are cached in the persistent object cache when available (auto-invalidated on product or category changes); visitor responses are cacheable for 5 minutes
 - Assets load only on pages that use the widgets
 - Visitors search anonymously (cacheable); logged-in users send their session with a REST nonce, so it also works on private and WordPress.com staging sites
 - Respects "Hidden from search" and "Hide out of stock items"
