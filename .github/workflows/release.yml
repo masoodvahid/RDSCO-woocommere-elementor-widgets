@@ -1,10 +1,10 @@
 name: Release
 
 # Either:
-#   - push a tag like v1.2.0, or
-#   - publish a release with a new v1.2.0 tag from the GitHub website.
-# The workflow builds bb-product-search.zip and attaches it to that release.
-# Sites running the plugin then see the update in wp-admin.
+#   - publish a release with a new tag (e.g. v1.1.0) on the GitHub website, or
+#   - push a tag: git tag v1.1.0 && git push origin v1.1.0
+# The workflow builds rdsco-woocommerce-elementor-widgets.zip and attaches it to
+# that release. Sites running the plugin then see the update in wp-admin.
 on:
   push:
     tags:
@@ -19,6 +19,9 @@ concurrency:
   group: release-${{ github.ref_name }}
   cancel-in-progress: false
 
+env:
+  SLUG: rdsco-woocommerce-elementor-widgets
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -28,11 +31,11 @@ jobs:
       - name: Check tag matches plugin version
         run: |
           TAG="${GITHUB_REF_NAME#v}"
-          HEADER=$(grep -m1 -E '^\s*\*\s*Version:' bb-product-search.php | sed -E 's/.*Version:[[:space:]]*//' | tr -d '[:space:]')
-          CONST=$(grep -m1 -E 'const VERSION' bb-product-search.php | sed -E "s/.*'([^']+)'.*/\1/")
+          HEADER=$(grep -m1 -E '^\s*\*\s*Version:' "$SLUG.php" | sed -E 's/.*Version:[[:space:]]*//' | tr -d '[:space:]')
+          CONST=$(grep -m1 "'RDSCO_WEW_VERSION'" "$SLUG.php" | sed -E "s/.*'RDSCO_WEW_VERSION',[[:space:]]*'([^']+)'.*/\1/")
           echo "tag=$TAG header=$HEADER const=$CONST"
           if [ "$TAG" != "$HEADER" ] || [ "$TAG" != "$CONST" ]; then
-            echo "::error::Tag v$TAG must match the plugin header Version ($HEADER) and VERSION constant ($CONST)."
+            echo "::error::Tag v$TAG must match the plugin header Version ($HEADER) and RDSCO_WEW_VERSION ($CONST)."
             exit 1
           fi
 
@@ -41,10 +44,10 @@ jobs:
 
       - name: Build zip
         run: |
-          mkdir -p build/bb-product-search
-          git archive HEAD | tar -x -C build/bb-product-search
-          cd build && zip -rq ../bb-product-search.zip bb-product-search
-          unzip -l ../bb-product-search.zip
+          mkdir -p "build/$SLUG"
+          git archive HEAD | tar -x -C "build/$SLUG"
+          cd build && zip -rq "../$SLUG.zip" "$SLUG"
+          unzip -l "../$SLUG.zip"
 
       - name: Publish release
         env:
@@ -52,9 +55,9 @@ jobs:
         run: |
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             # Release already exists (created on the website): attach/replace the zip.
-            gh release upload "$GITHUB_REF_NAME" bb-product-search.zip --clobber
+            gh release upload "$GITHUB_REF_NAME" "$SLUG.zip" --clobber
           else
-            gh release create "$GITHUB_REF_NAME" bb-product-search.zip \
+            gh release create "$GITHUB_REF_NAME" "$SLUG.zip" \
               --title "$GITHUB_REF_NAME" \
               --generate-notes \
               --verify-tag

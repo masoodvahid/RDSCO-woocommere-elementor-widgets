@@ -1,0 +1,525 @@
+/* RDSCO WooCommerce Elementor Widgets — search widgets.
+ * All selectors are scoped under .rdsco-search / .rdsco-csearch.
+ * Defaults stay modest so the Elementor style controls can override them. */
+
+/* ------------------------------------------------------------------
+ * Search box
+ * ---------------------------------------------------------------- */
+
+.rdsco-search {
+	position: relative;
+	width: 100%;
+	font: inherit;
+}
+
+.rdsco-search .rdsco-search__form {
+	position: relative;
+	margin: 0;
+}
+
+.rdsco-search .rdsco-search__field {
+	position: relative;
+}
+
+.rdsco-search__field input.rdsco-search__input {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	height: 46px;
+	margin: 0;
+	padding-block: 0;
+	padding-inline: 14px 40px;
+	border: 1px solid #d9d9d9;
+	border-radius: 6px;
+	background: #fff;
+	color: #111;
+	font: inherit;
+	font-size: 15px;
+	line-height: 1.4;
+	box-shadow: none;
+	outline: 0;
+	transition: border-color 0.15s ease, background-color 0.15s ease;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.rdsco-search__field.has-icon input.rdsco-search__input {
+	padding-inline-start: 42px;
+}
+
+.rdsco-search__field input.rdsco-search__input::placeholder {
+	color: #8a8a8a;
+	opacity: 1;
+}
+
+/* Native search decorations clash with the design and the spinner. */
+.rdsco-search__field input.rdsco-search__input::-webkit-search-cancel-button,
+.rdsco-search__field input.rdsco-search__input::-webkit-search-decoration {
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.rdsco-search__field input.rdsco-search__input:focus {
+	border-color: #111;
+}
+
+.rdsco-search__field input.rdsco-search__input:focus-visible {
+	box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.08);
+}
+
+.rdsco-search .rdsco-search__icon {
+	position: absolute;
+	top: 50%;
+	inset-inline-start: 14px;
+	width: 18px;
+	height: 18px;
+	color: #777;
+	transform: translateY(-50%);
+	pointer-events: none;
+}
+
+/* Loading spinner (end side of the field) */
+.rdsco-search.is-loading .rdsco-search__field::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	inset-inline-end: 14px;
+	width: 16px;
+	height: 16px;
+	margin-top: -8px;
+	border: 2px solid #ddd;
+	border-top-color: #111;
+	border-radius: 50%;
+	animation: rdsco-search-spin 0.6s linear infinite;
+}
+
+@keyframes rdsco-search-spin {
+	to { transform: rotate(360deg); }
+}
+
+/* ------------------------------------------------------------------
+ * Results
+ * ---------------------------------------------------------------- */
+
+.rdsco-search .rdsco-search__panel {
+	box-sizing: border-box;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	background: #fff;
+	text-align: start;
+}
+
+.rdsco-search--dropdown .rdsco-search__panel {
+	position: absolute;
+	z-index: 9999;
+	top: calc(100% + 6px);
+	inset-inline: 0;
+	max-height: min(70vh, 480px);
+	border: 1px solid #e6e6e6;
+	border-radius: 6px;
+	box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+}
+
+.rdsco-search--inline .rdsco-search__panel {
+	margin-top: 12px;
+	max-height: min(60vh, 520px);
+	background: transparent;
+}
+
+.rdsco-search .rdsco-search__panel[hidden],
+.rdsco-search .rdsco-search__message[hidden] {
+	display: none;
+}
+
+.rdsco-search .rdsco-search__list,
+.rdsco-search .rdsco-search__group-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.rdsco-search--dropdown .rdsco-search__list {
+	padding-block: 6px;
+}
+
+.rdsco-search .rdsco-search__list:empty {
+	display: none;
+}
+
+.rdsco-search .rdsco-search__item,
+.rdsco-search .rdsco-search__group {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.rdsco-search .rdsco-search__item::before,
+.rdsco-search .rdsco-search__group::before {
+	content: none;
+}
+
+.rdsco-search .rdsco-search__group + .rdsco-search__group {
+	margin-top: 4px;
+	border-top: 1px solid #f0f0f0;
+}
+
+.rdsco-search .rdsco-search__group-label {
+	padding: 8px 12px 4px;
+	color: #888;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.rdsco-search a.rdsco-search__link {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 8px 12px;
+	color: #111;
+	text-decoration: none;
+	box-shadow: none;
+}
+
+.rdsco-search a.rdsco-search__link:hover,
+.rdsco-search a.rdsco-search__link:focus,
+.rdsco-search .rdsco-search__item.is-active a.rdsco-search__link {
+	background: #f5f5f5;
+	color: #111;
+	text-decoration: none;
+}
+
+.rdsco-search--inline a.rdsco-search__link {
+	border-radius: 6px;
+}
+
+.rdsco-search .rdsco-search__thumb {
+	flex: 0 0 48px;
+	width: 48px;
+	height: 48px;
+	max-width: none;
+	margin: 0;
+	object-fit: cover;
+	border-radius: 4px;
+	background: #f2f2f2;
+}
+
+.rdsco-search .rdsco-search__body {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.rdsco-search .rdsco-search__title {
+	overflow: hidden;
+	font-size: 14px;
+	line-height: 1.35;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.rdsco-search .rdsco-search__meta {
+	color: #777;
+	font-size: 12px;
+}
+
+.rdsco-search .rdsco-search__price {
+	color: #111;
+	font-size: 13px;
+}
+
+.rdsco-search .rdsco-search__price del {
+	margin-inline-end: 4px;
+	color: #999;
+}
+
+.rdsco-search .rdsco-search__price ins {
+	text-decoration: none;
+}
+
+.rdsco-search .rdsco-search__all a.rdsco-search__link {
+	justify-content: center;
+	margin-top: 4px;
+	padding-block: 10px;
+	border-top: 1px solid #eee;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.rdsco-search .rdsco-search__message {
+	margin: 0;
+	padding: 12px 14px;
+	color: #666;
+	font-size: 14px;
+}
+
+/* Visually hidden (also WooCommerce's screen-reader text inside prices) */
+.rdsco-search .rdsco-search__sr,
+.rdsco-csearch .rdsco-search__sr,
+.rdsco-search .rdsco-search__price .screen-reader-text {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* ------------------------------------------------------------------
+ * Category search popup — trigger
+ * ---------------------------------------------------------------- */
+
+.rdsco-csearch {
+	width: 100%;
+}
+
+/* Base + hover/focus reset beats theme/kit button styles (max 0,2,1)
+ * while staying below the widget's style controls (0,3,1+). */
+.rdsco-csearch .rdsco-csearch__trigger,
+.rdsco-csearch .rdsco-csearch__trigger:hover,
+.rdsco-csearch .rdsco-csearch__trigger:focus {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0 14px;
+	border: 1px solid #d9d9d9;
+	border-radius: 6px;
+	background: #fff;
+	color: #8a8a8a;
+	font: inherit;
+	font-size: 15px;
+	line-height: 1.4;
+	text-align: start;
+	text-transform: none;
+	letter-spacing: normal;
+	box-shadow: none;
+	cursor: pointer;
+	transition: border-color 0.15s ease;
+}
+
+.rdsco-csearch .rdsco-csearch__trigger--box {
+	width: 100%;
+	height: 46px;
+}
+
+.rdsco-csearch .rdsco-csearch__trigger--icon {
+	justify-content: center;
+	width: 46px;
+	height: 46px;
+	padding: 0;
+	color: #111;
+}
+
+.rdsco-csearch .rdsco-csearch__trigger:hover {
+	border-color: #999;
+}
+
+.rdsco-csearch .rdsco-csearch__trigger:focus-visible {
+	border-color: #111;
+	outline: 2px solid #111;
+	outline-offset: 2px;
+}
+
+.rdsco-csearch .rdsco-csearch__icon {
+	flex: 0 0 auto;
+	width: 18px;
+	height: 18px;
+	color: #777;
+}
+
+.rdsco-csearch__trigger--icon .rdsco-csearch__icon {
+	color: inherit;
+}
+
+.rdsco-csearch .rdsco-csearch__trigger-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------
+ * Category search popup — dialog
+ * ---------------------------------------------------------------- */
+
+.rdsco-csearch .rdsco-csearch__dialog {
+	box-sizing: border-box;
+	width: calc(100% - 32px);
+	max-width: 640px;
+	max-height: calc(100dvh - 32px);
+	margin: 8vh auto auto;
+	padding: 0;
+	overflow: hidden;
+	border: 0;
+	border-radius: 10px;
+	background: #fff;
+	color: #111;
+	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+}
+
+.rdsco-csearch .rdsco-csearch__dialog::backdrop {
+	background-color: rgba(17, 17, 17, 0.45);
+}
+
+.rdsco-csearch .rdsco-csearch__dialog:not([open]) {
+	display: none;
+}
+
+.rdsco-csearch .rdsco-csearch__inner {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	max-height: calc(100dvh - 32px - 8vh);
+	padding: 18px 20px 20px;
+	overflow-y: auto;
+}
+
+.rdsco-csearch .rdsco-csearch__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.rdsco-csearch .rdsco-csearch__title {
+	margin: 0;
+	font-size: 17px;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.rdsco-csearch .rdsco-csearch__close,
+.rdsco-csearch .rdsco-csearch__close:hover,
+.rdsco-csearch .rdsco-csearch__close:focus {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 36px;
+	height: 36px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: #555;
+	box-shadow: none;
+	cursor: pointer;
+}
+
+.rdsco-csearch .rdsco-csearch__close:hover {
+	background: #f2f2f2;
+	color: #111;
+}
+
+.rdsco-csearch .rdsco-csearch__close:focus-visible {
+	outline: 2px solid #111;
+	outline-offset: 1px;
+}
+
+.rdsco-csearch .rdsco-csearch__close-icon {
+	width: 20px;
+	height: 20px;
+}
+
+/* Category picker: buttons (styled radios) */
+.rdsco-csearch .rdsco-csearch__cats--buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	max-height: 132px;
+	margin: 0;
+	padding: 2px;
+	overflow-y: auto;
+	border: 0;
+	min-inline-size: 0;
+}
+
+.rdsco-csearch .rdsco-csearch__cat {
+	position: relative;
+	display: inline-flex;
+	margin: 0;
+	cursor: pointer;
+}
+
+.rdsco-csearch .rdsco-csearch__cat input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.rdsco-csearch .rdsco-csearch__cat span {
+	display: inline-block;
+	padding: 6px 12px;
+	border: 1px solid #e0e0e0;
+	border-radius: 999px;
+	background: #fff;
+	color: #333;
+	font-size: 13px;
+	line-height: 1.3;
+	white-space: nowrap;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.rdsco-csearch__cat:hover span {
+	border-color: #bbb;
+}
+
+.rdsco-csearch .rdsco-csearch__cat input:checked + span {
+	border-color: #111;
+	background: #111;
+	color: #fff;
+}
+
+.rdsco-csearch .rdsco-csearch__cat input:focus-visible + span {
+	outline: 2px solid #111;
+	outline-offset: 2px;
+}
+
+/* Category picker: dropdown */
+.rdsco-csearch .rdsco-csearch__select {
+	box-sizing: border-box;
+	width: 100%;
+	height: 42px;
+	margin: 0;
+	padding: 0 12px;
+	border: 1px solid #d9d9d9;
+	border-radius: 6px;
+	background-color: #fff;
+	color: #111;
+	font: inherit;
+	font-size: 14px;
+}
+
+html.rdsco-search-lock {
+	overflow: hidden;
+}
+
+@media (max-width: 600px) {
+	.rdsco-csearch .rdsco-csearch__dialog {
+		width: calc(100% - 16px);
+		margin-top: 8px;
+		border-radius: 10px;
+	}
+
+	.rdsco-csearch .rdsco-csearch__inner {
+		max-height: calc(100dvh - 24px);
+		padding: 14px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.rdsco-search.is-loading .rdsco-search__field::after {
+		animation-duration: 1.6s;
+	}
+}

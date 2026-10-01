@@ -1,24 +1,27 @@
 <?php
 /**
- * Lightweight updater that serves plugin updates from GitHub Releases.
+ * Serves plugin updates from GitHub Releases.
  *
- * How it works:
  * - The plugin header declares `Update URI: https://github.com/...`, so WordPress
- *   (5.8+) never asks wordpress.org about this plugin and instead fires the
- *   `update_plugins_github.com` filter during its normal update checks.
- * - We answer that filter with the latest GitHub release (cached for 12 hours),
- *   using the release asset `bb-product-search.zip` as the package.
+ *   (5.8+) never asks wordpress.org about this plugin and fires the
+ *   `update_plugins_github.com` filter during its normal update checks instead.
+ * - We answer with the latest GitHub release (cached 12 hours), using the
+ *   release asset zip as the package.
  * - `plugins_api` feeds the "View details" modal with the release notes.
- * - `upgrader_source_selection` keeps the plugin folder name stable if the
- *   package ever comes from GitHub's auto-generated zipball instead.
+ * - `upgrader_source_selection` keeps the folder name stable if the package
+ *   ever comes from GitHub's auto-generated zipball.
  *
- * Optional: define( 'BBPS_GITHUB_TOKEN', '...' ) in wp-config.php to raise the
- * GitHub API rate limit (not needed for a public repository).
+ * Optional: define( 'RDSCO_WEW_GITHUB_TOKEN', '...' ) in wp-config.php to raise
+ * the GitHub API rate limit (not needed for a public repository).
  */
+
+namespace RDSCO\WEW;
+
+use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
 
-final class BBPS_GitHub_Updater {
+final class GitHub_Updater {
 
 	private const CACHE_TTL     = 43200; // 12 hours.
 	private const ERROR_TTL     = 3600;  // Back off for 1 hour after a failed check.
@@ -38,7 +41,7 @@ final class BBPS_GitHub_Updater {
 	) {
 		$this->basename  = plugin_basename( $file );
 		$this->slug      = dirname( $this->basename );
-		$this->cache_key = 'bbps_gh_' . md5( strtolower( $owner . '/' . $repo ) );
+		$this->cache_key = 'rdsco_wew_gh_' . md5( strtolower( $owner . '/' . $repo ) );
 	}
 
 	public function register(): void {
@@ -109,14 +112,14 @@ final class BBPS_GitHub_Updater {
 				'description' => wpautop( esc_html( $plugin['Description'] ) ),
 				'changelog'   => $release && '' !== $release['notes']
 					? wpautop( esc_html( $release['notes'] ) )
-					: '<p><a href="' . esc_url( $repo . '/releases' ) . '">' . esc_html__( 'See releases on GitHub', 'bb-product-search' ) . '</a></p>',
+					: '<p><a href="' . esc_url( $repo . '/releases' ) . '">' . esc_html__( 'See releases on GitHub', 'rdsco-woocommerce-elementor-widgets' ) . '</a></p>',
 			],
 		];
 	}
 
 	/**
-	 * Rename the extracted folder to our slug (e.g. a GitHub zipball extracts
-	 * to "owner-repo-<sha>/"), so the plugin path and activation are kept.
+	 * Rename the extracted folder to our slug (a GitHub zipball extracts to
+	 * "owner-repo-<sha>/"), so the plugin path and its activation are kept.
 	 *
 	 * @param string|WP_Error $source
 	 * @return string|WP_Error
@@ -134,7 +137,7 @@ final class BBPS_GitHub_Updater {
 		}
 
 		if ( ! $wp_filesystem || ! $wp_filesystem->move( untrailingslashit( $source ), untrailingslashit( $desired ), true ) ) {
-			return new WP_Error( 'bbps_update_folder', __( 'Could not prepare the plugin update folder.', 'bb-product-search' ) );
+			return new WP_Error( 'rdsco_wew_update_folder', __( 'Could not prepare the plugin update folder.', 'rdsco-woocommerce-elementor-widgets' ) );
 		}
 
 		return $desired;
@@ -148,7 +151,7 @@ final class BBPS_GitHub_Updater {
 	 */
 	public function row_meta( $links, $plugin_file ) {
 		if ( $plugin_file === $this->basename && current_user_can( 'update_plugins' ) ) {
-			$links[] = '<a href="' . esc_url( self_admin_url( 'update-core.php?force-check=1' ) ) . '">' . esc_html__( 'Check for updates', 'bb-product-search' ) . '</a>';
+			$links[] = '<a href="' . esc_url( self_admin_url( 'update-core.php?force-check=1' ) ) . '">' . esc_html__( 'Check for updates', 'rdsco-woocommerce-elementor-widgets' ) . '</a>';
 		}
 		return $links;
 	}
@@ -275,8 +278,8 @@ final class BBPS_GitHub_Updater {
 			'X-GitHub-Api-Version' => '2022-11-28',
 		];
 
-		if ( defined( 'BBPS_GITHUB_TOKEN' ) && is_string( BBPS_GITHUB_TOKEN ) && '' !== BBPS_GITHUB_TOKEN ) {
-			$headers['Authorization'] = 'Bearer ' . BBPS_GITHUB_TOKEN;
+		if ( defined( 'RDSCO_WEW_GITHUB_TOKEN' ) && is_string( RDSCO_WEW_GITHUB_TOKEN ) && '' !== RDSCO_WEW_GITHUB_TOKEN ) {
+			$headers['Authorization'] = 'Bearer ' . RDSCO_WEW_GITHUB_TOKEN;
 		}
 
 		return $headers;
