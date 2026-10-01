@@ -93,16 +93,27 @@ final class Plugin {
 			'minChars' => Search_API::MIN_CHARS,
 			'delay'    => self::SEARCH_DELAY,
 			'i18n'     => [
-				'loading' => __( 'Searching…', 'rdsco-woocommerce-elementor-widgets' ),
-				'none'    => __( 'No products found.', 'rdsco-woocommerce-elementor-widgets' ),
-				'error'   => __( 'Search is unavailable right now. Please try again.', 'rdsco-woocommerce-elementor-widgets' ),
-				'viewAll' => __( 'View all results', 'rdsco-woocommerce-elementor-widgets' ),
-				'sku'     => __( 'SKU', 'rdsco-woocommerce-elementor-widgets' ),
-				'other'   => __( 'Other', 'rdsco-woocommerce-elementor-widgets' ),
+				'loading'   => __( 'Searching…', 'rdsco-woocommerce-elementor-widgets' ),
+				'none'      => __( 'No products found.', 'rdsco-woocommerce-elementor-widgets' ),
+				'error'     => __( 'Search is unavailable right now. Please try again.', 'rdsco-woocommerce-elementor-widgets' ),
+				'viewAll'   => __( 'View all results', 'rdsco-woocommerce-elementor-widgets' ),
+				'sku'       => __( 'SKU', 'rdsco-woocommerce-elementor-widgets' ),
+				'other'     => __( 'Other', 'rdsco-woocommerce-elementor-widgets' ),
 				/* translators: %d: number of results. */
-				'results' => __( '%d results available.', 'rdsco-woocommerce-elementor-widgets' ),
+				'results'   => __( '%d results available.', 'rdsco-woocommerce-elementor-widgets' ),
+				'allCats'   => __( 'All products', 'rdsco-woocommerce-elementor-widgets' ),
+				/* translators: %d: number of selected categories. */
+				'catsCount' => __( '%d selected', 'rdsco-woocommerce-elementor-widgets' ),
 			],
 		];
+
+		// Logged-in users (editors, and everyone on a private/staging site) send
+		// their session with a REST nonce. Visitors stay anonymous, so responses
+		// remain cacheable and no nonce ends up in full-page caches.
+		if ( is_user_logged_in() ) {
+			$config['nonce'] = wp_create_nonce( 'wp_rest' );
+			$config['debug'] = current_user_can( 'edit_theme_options' ); // Show the real error to site builders.
+		}
 
 		wp_add_inline_script( self::ASSET_HANDLE, 'window.rdscoSearchConfig = ' . wp_json_encode( $config ) . ';', 'before' );
 	}

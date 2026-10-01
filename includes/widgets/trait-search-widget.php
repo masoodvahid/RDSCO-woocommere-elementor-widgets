@@ -110,6 +110,7 @@ trait Search_Widget {
 		$paths = [
 			'search' => '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
 			'close'  => '<path d="M18 6 6 18M6 6l12 12"/>',
+			'chevron' => '<path d="m9 6 6 6-6 6"/>',
 		];
 
 		return '<svg class="' . esc_attr( $class_name ) . '" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'

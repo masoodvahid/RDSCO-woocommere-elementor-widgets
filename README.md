@@ -5,7 +5,7 @@ Elementor widgets for WooCommerce, grouped under **RDSCO Widgets** in the Elemen
 | Widget | What it does |
 |---|---|
 | **Live Product Search** | A search bar that shows matching products as the visitor types (name, SKU, optionally description). Results are clickable. |
-| **Category Search Popup** | A search box that opens a popup. The visitor picks a category (or all products) and searches inside it. |
+| **Category Search Popup** | A search box that opens a popup with a category tree beside the search field. The visitor ticks any categories (or none for all products) and searches inside them. |
 
 Requires WordPress 6.5+, WooCommerce, Elementor 3.20+, PHP 8.1+.
 
@@ -17,8 +17,9 @@ Requires WordPress 6.5+, WooCommerce, Elementor 3.20+, PHP 8.1+.
 
 **Category Search Popup**
 - Display: search box or icon only; popup title and placeholder
-- Categories to offer: top-level, all (nested), or a hand-picked list in your order
-- Category picker: buttons or dropdown; "All products" label; hide empty categories
+- Category tree (checkboxes, multi-select): beside the search box (before/after) or above it; stacks above on phones
+- Categories: all, or a hand-picked list (with their sub-categories) in your order; levels shown; start expanded or collapsed; hide empty
+- Ticking a category includes all its sub-categories; parents show a partial state; "Clear" returns to all products
 
 **Both (Results)**
 - Number of results (1–20), group results by category
@@ -33,6 +34,7 @@ Requires WordPress 6.5+, WooCommerce, Elementor 3.20+, PHP 8.1+.
 - One ranked SQL query; SKUs (including variation SKUs) come from WooCommerce's indexed `wc_product_meta_lookup` table
 - Results are cached in the persistent object cache when available (auto-invalidated on product or category changes); responses are anonymous and cacheable for 5 minutes
 - Assets load only on pages that use the widgets
+- Visitors search anonymously (cacheable); logged-in users send their session with a REST nonce, so it also works on private and WordPress.com staging sites
 - Respects "Hidden from search" and "Hide out of stock items"
 
 ## Install

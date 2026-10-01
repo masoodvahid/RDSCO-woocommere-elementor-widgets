@@ -96,8 +96,11 @@ final class Search_API {
 
 		$response = new WP_REST_Response( [ 'items' => self::cached_search( $args ) ] );
 
-		// Requests are sent without cookies, so the response is the same for everyone.
-		$response->header( 'Cache-Control', 'public, max-age=' . self::HTTP_TTL );
+		// Visitors' requests carry no cookies, so their responses are shareable.
+		// Logged-in requests keep core's no-cache headers.
+		if ( ! is_user_logged_in() ) {
+			$response->header( 'Cache-Control', 'public, max-age=' . self::HTTP_TTL );
+		}
 
 		return $response;
 	}

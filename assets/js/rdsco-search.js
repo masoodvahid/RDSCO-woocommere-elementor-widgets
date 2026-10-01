@@ -38,6 +38,41 @@
 		cache.set(key, value);
 	}
 
+	/**
+	 * Visitors search anonymously (no cookies): lighter and cacheable.
+	 * Logged-in users send their session + REST nonce, which private and
+	 * staging sites require.
+	 */
+	function request(url, signal, withSession) {
+		const init = { signal, credentials: 'omit', headers: { Accept: 'application/json' } };
+		if (withSession) {
+			init.credentials = 'same-origin';
+			init.headers['X-WP-Nonce'] = config.nonce;
+		}
+		return fetch(url, init);
+	}
+
+	async function fetchItems(url, signal) {
+		let res = await request(url, signal, Boolean(config.nonce));
+
+		// Nonce expired (tab left open for a day): retry once as a visitor.
+		if (config.nonce && (res.status === 401 || res.status === 403)) {
+			const body = await res.clone().json().catch(() => null);
+			if (body && body.code === 'rest_cookie_invalid_nonce') {
+				res = await request(url, signal, false);
+			}
+		}
+
+		if (!res.ok) {
+			const body = await res.json().catch(() => null);
+			const detail = body && body.code ? ' ' + body.code + (body.message ? ': ' + body.message : '') : '';
+			throw new Error('HTTP ' + res.status + detail);
+		}
+
+		const data = await res.json();
+		return data && Array.isArray(data.items) ? data.items : [];
+	}
+
 	function el(tag, className, text) {
 		const node = document.createElement(tag);
 		if (className) {
@@ -260,6 +295,7 @@
 		async function run(term) {
 			const key = keyFor(term);
 			if (key === shownKey && !panel.hidden) {
+				abort(); // e.g. a category was ticked and unticked again.
 				return;
 			}
 
@@ -285,17 +321,7 @@
 					url.searchParams.set('cats', scopeIds.join(','));
 				}
 
-				const res = await fetch(url.toString(), {
-					signal: ctrl.signal,
-					credentials: 'omit', // Anonymous: lighter, and cacheable by the browser/CDN.
-					headers: { Accept: 'application/json' },
-				});
-				if (!res.ok) {
-					throw new Error('HTTP ' + res.status);
-				}
-
-				const data = await res.json();
-				const items = data && Array.isArray(data.items) ? data.items : [];
+				const items = await fetchItems(url.toString(), ctrl.signal);
 				cacheSet(key, items);
 
 				// Ignore late responses for a term or category the user already changed.
@@ -303,8 +329,11 @@
 					render(items, term, key);
 				}
 			} catch (err) {
-				if (err && err.name !== 'AbortError' && keyFor(currentTerm()) === key) {
-					showMessage(t.error, '');
+				if (err && err.name !== 'AbortError') {
+					window.console && console.warn('[RDSCO search]', err.message || err);
+					if (keyFor(currentTerm()) === key) {
+						showMessage(t.error + (config.debug && err.message ? ' (' + err.message + ')' : ''), '');
+					}
 				}
 			} finally {
 				if (controller === ctrl) {
@@ -414,11 +443,13 @@
 					catField.disabled = !scopeSlugs.length;
 				}
 
-				// A category change is not typing: search right away if there is a term.
+				// Same 500 ms rule as typing, so ticking several categories in a
+				// row sends one request.
 				window.clearTimeout(timer);
 				const term = currentTerm();
 				if (charCount(term) >= MIN_CHARS) {
-					run(term);
+					setBusy(true);
+					timer = window.setTimeout(() => run(term), DELAY);
 				}
 			},
 		};
@@ -445,7 +476,6 @@
 
 		const search = createSearch(dialog.querySelector('.rdsco-search'));
 		const closeBtn = dialog.querySelector('.rdsco-csearch__close');
-		const picker = dialog.querySelector('.rdsco-csearch__cats');
 		const html = document.documentElement;
 		const native = typeof dialog.showModal === 'function';
 
@@ -501,22 +531,98 @@
 			}
 		});
 
-		if (picker && search) {
-			picker.addEventListener('change', (e) => {
-				const field = e.target;
-				let choice = null;
+		const tree = dialog.querySelector('.rdsco-csearch__tree');
+		if (tree && search) {
+			initTree(tree, dialog.querySelector('.rdsco-csearch__clear'), (ids, slugs) => search.setScope(ids, slugs));
+		}
+	}
 
-				if (field instanceof HTMLSelectElement) {
-					choice = field.options[field.selectedIndex] || null;
-				} else if (field instanceof HTMLInputElement && field.checked) {
-					choice = field;
-				}
-				if (!choice) {
-					return;
-				}
+	/* ------------------------------------------------------------------
+	 * Category tree (checkboxes, multi-select)
+	 * ---------------------------------------------------------------- */
 
-				const id = parseInt(choice.value, 10) || 0;
-				search.setScope(id ? [id] : [], id && choice.dataset.slug ? [choice.dataset.slug] : []);
+	function initTree(tree, clearBtn, onChange) {
+		const NODE = '.rdsco-csearch__node';
+		const boxOf = (li) => li.querySelector(':scope > .rdsco-csearch__row input[type="checkbox"]');
+		const childNodes = (li) => Array.from(li.querySelectorAll(':scope > .rdsco-csearch__children > ' + NODE));
+		const parentOf = (li) => (li.parentElement ? li.parentElement.closest(NODE) : null);
+
+		// Top-most ticked categories only: the server adds sub-categories itself.
+		function selection() {
+			const ids = [];
+			const slugs = [];
+			const walk = (nodes) => {
+				nodes.forEach((li) => {
+					const box = boxOf(li);
+					if (box && box.checked) {
+						ids.push(parseInt(box.value, 10));
+						slugs.push(box.dataset.slug || '');
+					} else {
+						walk(childNodes(li));
+					}
+				});
+			};
+			walk(Array.from(tree.querySelectorAll(':scope > ' + NODE)));
+			return { ids, slugs };
+		}
+
+		function emit() {
+			const { ids, slugs } = selection();
+			if (clearBtn) {
+				clearBtn.hidden = !ids.length;
+			}
+			onChange(ids, slugs);
+		}
+
+		tree.addEventListener('change', (e) => {
+			const box = e.target;
+			if (!(box instanceof HTMLInputElement) || box.type !== 'checkbox') {
+				return;
+			}
+			const li = box.closest(NODE);
+			if (!li) {
+				return;
+			}
+
+			// Down: a category includes all of its sub-categories.
+			li.querySelectorAll('.rdsco-csearch__children input[type="checkbox"]').forEach((child) => {
+				child.checked = box.checked;
+				child.indeterminate = false;
+			});
+
+			// Up: parents become ticked when all children are, partial otherwise.
+			for (let parent = parentOf(li); parent; parent = parentOf(parent)) {
+				const kids = childNodes(parent).map(boxOf).filter(Boolean);
+				const all = kids.every((k) => k.checked);
+				const some = kids.some((k) => k.checked || k.indeterminate);
+				const pBox = boxOf(parent);
+				pBox.checked = all;
+				pBox.indeterminate = !all && some;
+			}
+
+			emit();
+		});
+
+		tree.addEventListener('click', (e) => {
+			const toggle = e.target.closest('.rdsco-csearch__toggle');
+			if (!toggle || !tree.contains(toggle)) {
+				return;
+			}
+			const list = document.getElementById(toggle.getAttribute('aria-controls'));
+			const open = toggle.getAttribute('aria-expanded') !== 'true';
+			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+			if (list) {
+				list.hidden = !open;
+			}
+		});
+
+		if (clearBtn) {
+			clearBtn.addEventListener('click', () => {
+				tree.querySelectorAll('input[type="checkbox"]').forEach((box) => {
+					box.checked = false;
+					box.indeterminate = false;
+				});
+				emit();
 			});
 		}
 	}
