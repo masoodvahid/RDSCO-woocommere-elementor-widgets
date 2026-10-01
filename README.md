@@ -43,11 +43,13 @@ define( 'BBPS_GITHUB_TOKEN', 'github_pat_...' ); // fine-grained, read-only, pub
    - the header: ` * Version: 1.2.0`
    - the constant: `public const VERSION = '1.2.0';`
 2. Commit and push to `main`.
-3. Tag and push:
+3. Create the release, either way:
+   - **Website:** Releases → *Draft a new release* → *Choose a tag* → type `v1.2.0` → *Create new tag on publish* (target `main`) → *Publish release*.
+   - **Command line:**
 
-   ```bash
-   git tag v1.2.0
-   git push origin v1.2.0
-   ```
+     ```bash
+     git tag v1.2.0
+     git push origin v1.2.0
+     ```
 
-The **Release** workflow checks that the tag matches both versions, lints PHP, builds `bb-product-search.zip` (folder `bb-product-search/`) and publishes the release. Sites see the update within 12 hours.
+The **Release** workflow checks that the tag matches both versions, lints PHP, builds `bb-product-search.zip` (folder `bb-product-search/`) and attaches it to the release. Sites see the update within 12 hours, or immediately via **Check for updates**.

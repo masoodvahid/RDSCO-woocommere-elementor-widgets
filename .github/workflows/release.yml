@@ -1,14 +1,23 @@
 name: Release
 
-# Push a tag like v1.2.0 → this builds bb-product-search.zip and publishes a
-# GitHub Release. Sites running the plugin see the update in wp-admin.
+# Either:
+#   - push a tag like v1.2.0, or
+#   - publish a release with a new v1.2.0 tag from the GitHub website.
+# The workflow builds bb-product-search.zip and attaches it to that release.
+# Sites running the plugin then see the update in wp-admin.
 on:
   push:
     tags:
       - "v*"
+  release:
+    types: [published]
 
 permissions:
   contents: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -41,7 +50,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" bb-product-search.zip \
-            --title "$GITHUB_REF_NAME" \
-            --generate-notes \
-            --verify-tag
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            # Release already exists (created on the website): attach/replace the zip.
+            gh release upload "$GITHUB_REF_NAME" bb-product-search.zip --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" bb-product-search.zip \
+              --title "$GITHUB_REF_NAME" \
+              --generate-notes \
+              --verify-tag
+          fi
